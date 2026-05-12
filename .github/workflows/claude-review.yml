@@ -1,0 +1,63 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  pull_request_review_comment:
+    types: [created, edited]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  claude-code-review:
+    runs-on: ubuntu-latest
+    # Only run on PR events or when @claude-review is mentioned
+    if: |
+      github.event_name == 'pull_request' ||
+      (contains(github.event.comment.body, '@claude-review') &&
+      github.event.pull_request != null) &&
+      !contains('claude[bot],dependabot[bot],github-actions[bot]', github.actor)
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      comments: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          model: claude-opus-4-5-20251101
+          max_turns: 20
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Read-only mode for code review
+          allowed_tools: |
+            git_diff
+            git_log
+            read
+            view_file
+          tool_restrictions: |
+            - Cannot modify files
+            - Cannot create files
+            - Cannot run write operations
+            - Review and feedback only
