@@ -1,5 +1,6 @@
 package com.example.api;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +29,13 @@ public class UserController {
     }
     
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
         User savedUser = userRepository.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails) {
         Optional<User> existingUser = userRepository.findById(id);
         if (existingUser.isPresent()) {
             User user = existingUser.get();
