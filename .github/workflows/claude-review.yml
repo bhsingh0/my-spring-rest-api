@@ -3,60 +3,39 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize]
-  pull_request_review_comment:
-    types: [created, edited]
   issue_comment:
-    types: [created, edited]
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
 
 jobs:
-  claude-code-review:
+  claude-review:
     runs-on: ubuntu-latest
-    # Only run on PR events or when @claude-review is mentioned
     if: |
-      github.event_name == 'pull_request' ||
-      (contains(github.event.comment.body, '@claude-review') &&
-      github.event.pull_request != null) &&
-      !contains('claude[bot],dependabot[bot],github-actions[bot]', github.actor)
-    
+      github.actor != 'claude[bot]' &&
+      github.actor != 'dependabot[bot]' &&
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name == 'pull_request' ||
+       contains(github.event.comment.body, '@claude-review'))
+
     permissions:
       contents: read
       pull-requests: write
-    
+      issues: write
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Set up Java 17
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-      
-      - name: Cache Maven packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      
+          cache: maven
+
       - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
+          token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           model: claude-opus-4-5-20251101
           max_turns: 20
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Read-only mode for code review
-          allowed_tools: |
-            git_diff
-            git_log
-            read
-            view_file
-          tool_restrictions: |
-            - Cannot modify files
-            - Cannot create files
-            - Cannot run write operations
-            - Review and feedback only
