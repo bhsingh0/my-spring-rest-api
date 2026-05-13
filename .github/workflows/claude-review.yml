@@ -8,9 +8,14 @@ on:
   pull_request_review_comment:
     types: [created]
 
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: |
       github.actor != 'claude[bot]' &&
       github.actor != 'dependabot[bot]' &&
@@ -28,7 +33,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -37,8 +42,18 @@ jobs:
 
       - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
-        env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         with:
-          model: claude-opus-4-5-20251101
-          max_turns: 20
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: "--model claude-sonnet-4-6 --max-turns 20"
+          prompt: |
+            Please review this pull request against our Spring Boot project standards:
+
+            1. **Code style** — Java naming conventions (PascalCase classes, camelCase methods, UPPER_SNAKE_CASE constants), no unused imports
+            2. **Spring Boot patterns** — correct use of @RestController, @Service, @Repository, proper DTO separation from entities
+            3. **JPA/database** — entity relationships, query efficiency, no N+1 issues
+            4. **Test coverage** — happy path, invalid input (400), not found (404), edge cases, HTTP status code assertions; use @WebMvcTest + @MockBean
+            5. **Error handling** — exceptions caught, meaningful messages, no swallowed errors
+            6. **Security** — no secrets in code, no SQL injection risk, input validation at controller boundaries
+
+            Post a structured review comment on the PR. For each category, note what looks good and flag specific issues with file:line references.
