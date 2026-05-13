@@ -1,0 +1,169 @@
+# ============================================================
+#  .gitignore — Java Spring Boot / Maven
+# ============================================================
+
+# ── Maven build output ───────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ── Maven wrapper (keep the wrapper, ignore downloaded binary)
+.mvn/wrapper/maven-wrapper.properties
+# Uncomment the next line only if you DO commit the wrapper jar:
+# !.mvn/wrapper/maven-wrapper.jar
+
+# ── Spring Boot fat jar / war ────────────────────────────────
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+# Keep the wrapper jar if it exists
+!.mvn/wrapper/maven-wrapper.jar
+
+# ── Spring Boot runtime ──────────────────────────────────────
+spring-shell.log
+RUNNING_PID
+
+# ── Log files ────────────────────────────────────────────────
+*.log
+*.log.*
+logs/
+log/
+
+# ── Environment and secrets ──────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+*.properties.local
+application-local.properties
+application-local.yml
+application-local.yaml
+# Never commit secrets — use CI/CD secrets or a vault instead
+
+# ── H2 / embedded database files ─────────────────────────────
+*.db
+*.h2.db
+*.mv.db
+*.trace.db
+
+# ── IDE — IntelliJ IDEA ──────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+# Uncomment to keep run configurations if your team shares them:
+# !.idea/runConfigurations/
+
+# ── IDE — VS Code ────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json   # keep shared extension recommendations
+*.code-workspace
+
+# ── IDE — Eclipse / STS ──────────────────────────────────────
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# ── IDE — NetBeans ───────────────────────────────────────────
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ── OS — macOS ───────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ── OS — Windows ─────────────────────────────────────────────
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ── OS — Linux ───────────────────────────────────────────────
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ── Editor backups / swap files ──────────────────────────────
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+*.orig
+*.bak
+*.tmp
+
+# ── Test output ───────────────────────────────────────────────
+surefire-reports/
+failsafe-reports/
+test-results/
+coverage/
+.jacoco/
+jacoco.exec
+*.exec
+
+# ── SonarQube / static analysis ──────────────────────────────
+.sonar/
+.scannerwork/
+
+# ── Docker (local overrides only — commit the base files) ────
+docker-compose.override.yml
+.dockerenv
+
+# ── Gradle (if ever migrated) ────────────────────────────────
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# ── Node / frontend tooling (if added later) ─────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ── Misc ─────────────────────────────────────────────────────
+*.pid
+*.seed
+*.pid.lock
+AUTOMATION_SCRIPT
