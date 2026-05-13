@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -128,20 +129,43 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/users/{id} - should return 404 for non-existent id")
-    void testGetUserById_WithNonExistentId_ReturnsNotFound() throws Exception {
-        // Arrange
-        when(userRepository.findById(0L)).thenReturn(Optional.empty());
-
-        // Act & Assert
+    @DisplayName("GET /api/users/{id} - should return 400 for id=0 (not positive)")
+    void testGetUserById_WithZeroId_ReturnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/users/0")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
 
-        verify(userRepository, times(1)).findById(0L);
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("GET /api/users/{id} - should return 400 for negative id")
+    void testGetUserById_WithNegativeId_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/users/-1")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verify(userRepository, never()).findById(any());
     }
 
     // ==================== POST /api/users ====================
+
+    @Test
+    @DisplayName("POST /api/users - should return 409 when email is already in use")
+    void testCreateUser_WithDuplicateEmail_ReturnsConflict() throws Exception {
+        // Arrange
+        User newUser = new User(null, "Alice Johnson", "john@example.com", null);
+        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("Duplicate email"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newUser)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error", is("Email already in use")));
+
+        verify(userRepository, times(1)).save(any(User.class));
+    }
 
     @Test
     @DisplayName("POST /api/users - should create user and return 201 with valid data")
@@ -324,6 +348,25 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("PUT /api/users/{id} - should return 409 when updated email is already in use")
+    void testUpdateUser_WithDuplicateEmail_ReturnsConflict() throws Exception {
+        // Arrange
+        User userUpdates = new User(null, "John Updated", "jane@example.com", null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("Duplicate email"));
+
+        // Act & Assert
+        mockMvc.perform(put("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userUpdates)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error", is("Email already in use")));
+
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
     @DisplayName("PUT /api/users/{id} - should return 400 with invalid update data")
     void testUpdateUser_WithInvalidData_ReturnsBadRequest() throws Exception {
         // Arrange
@@ -374,18 +417,25 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/users/{id} - should return 404 for non-existent user")
-    void testDeleteUser_WithNonExistentId_ReturnsNotFound() throws Exception {
-        // Arrange
-        when(userRepository.existsById(0L)).thenReturn(false);
-
-        // Act & Assert
+    @DisplayName("DELETE /api/users/{id} - should return 400 for id=0 (not positive)")
+    void testDeleteUser_WithZeroId_ReturnsBadRequest() throws Exception {
         mockMvc.perform(delete("/api/users/0")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
 
-        verify(userRepository, times(1)).existsById(0L);
-        verify(userRepository, never()).deleteById(0L);
+        verify(userRepository, never()).existsById(any());
+        verify(userRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/users/{id} - should return 400 for negative id")
+    void testDeleteUser_WithNegativeId_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(delete("/api/users/-5")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verify(userRepository, never()).existsById(any());
+        verify(userRepository, never()).deleteById(any());
     }
 
     @Test
